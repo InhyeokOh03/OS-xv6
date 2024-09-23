@@ -88,6 +88,7 @@ allocproc(void)
 found:
   p->state = EMBRYO;
   p->pid = nextpid++;
+  p->ctx_swc_counter = 0;
 
   release(&ptable.lock);
 
@@ -261,6 +262,9 @@ exit(void)
     }
   }
 
+  // Print the number of context switches (cswitch)
+  cprintf("\n%s(%d) consumed %d bytes, performed %d context switches\n", curproc->name, curproc->pid, curproc->sz, curproc->ctx_swc_counter);  
+
   // Jump into the scheduler, never to return.
   curproc->state = ZOMBIE;
   sched();
@@ -342,6 +346,8 @@ scheduler(void)
       c->proc = p;
       switchuvm(p);
       p->state = RUNNING;
+
+      p->ctx_swc_counter += 1;
 
       swtch(&(c->scheduler), p->context);
       switchkvm();

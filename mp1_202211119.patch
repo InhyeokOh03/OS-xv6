@@ -1,0 +1,121 @@
+diff --git a/proc.c b/proc.c
+index 806b1b1..45bd863 100644
+--- a/proc.c
++++ b/proc.c
+@@ -88,6 +88,7 @@ allocproc(void)
+ found:
+   p->state = EMBRYO;
+   p->pid = nextpid++;
++  p->ctx_swc_counter = 0;
+ 
+   release(&ptable.lock);
+ 
+@@ -261,6 +262,9 @@ exit(void)
+     }
+   }
+ 
++  // Print the number of context switches (cswitch)
++  cprintf("\n%s(%d) consumed %d bytes, performed %d context switches\n", curproc->name, curproc->pid, curproc->sz, curproc->ctx_swc_counter);  
++
+   // Jump into the scheduler, never to return.
+   curproc->state = ZOMBIE;
+   sched();
+@@ -343,6 +347,8 @@ scheduler(void)
+       switchuvm(p);
+       p->state = RUNNING;
+ 
++      p->ctx_swc_counter += 1;
++
+       swtch(&(c->scheduler), p->context);
+       switchkvm();
+ 
+diff --git a/proc.h b/proc.h
+index 1647114..cfcc750 100644
+--- a/proc.h
++++ b/proc.h
+@@ -49,6 +49,7 @@ struct proc {
+   struct file *ofile[NOFILE];  // Open files
+   struct inode *cwd;           // Current directory
+   char name[16];               // Process name (debugging)
++  int ctx_swc_counter;         // Context Swich Counter
+ };
+ 
+ // Process memory is laid out contiguously, low addresses first:
+diff --git a/syscall.c b/syscall.c
+index ee85261..6c94ae0 100644
+--- a/syscall.c
++++ b/syscall.c
+@@ -103,6 +103,8 @@ extern int sys_unlink(void);
+ extern int sys_wait(void);
+ extern int sys_write(void);
+ extern int sys_uptime(void);
++extern int sys_gethostname(void);
++extern int sys_sethostname(void);
+ 
+ static int (*syscalls[])(void) = {
+ [SYS_fork]    sys_fork,
+@@ -126,6 +128,8 @@ static int (*syscalls[])(void) = {
+ [SYS_link]    sys_link,
+ [SYS_mkdir]   sys_mkdir,
+ [SYS_close]   sys_close,
++[SYS_gethostname] sys_gethostname,
++[SYS_sethostname] sys_sethostname,
+ };
+ 
+ void
+diff --git a/syscall.h b/syscall.h
+index bc5f356..80d4492 100644
+--- a/syscall.h
++++ b/syscall.h
+@@ -20,3 +20,5 @@
+ #define SYS_link   19
+ #define SYS_mkdir  20
+ #define SYS_close  21
++#define SYS_gethostname 22
++#define SYS_sethostname 23
+diff --git a/sysproc.c b/sysproc.c
+index 0686d29..14261cd 100644
+--- a/sysproc.c
++++ b/sysproc.c
+@@ -89,3 +89,15 @@ sys_uptime(void)
+   release(&tickslock);
+   return xticks;
+ }
++
++int
++sys_gethostname(void)
++{
++  return 0;
++}
++
++int
++sys_sethostname(void)
++{
++  return 0;
++}
+\ No newline at end of file
+diff --git a/user.h b/user.h
+index f341021..47bcabe 100644
+--- a/user.h
++++ b/user.h
+@@ -24,6 +24,9 @@ char* sbrk(int);
+ int sleep(int);
+ int uptime(void);
+ 
++int gethostname(char *);
++int sethostname(const char *);
++
+ // ulib.c
+ int stat(const char*, struct stat*);
+ char* strcpy(char*, const char*);
+diff --git a/usys.S b/usys.S
+index 8bfd8a1..ecb1300 100644
+--- a/usys.S
++++ b/usys.S
+@@ -29,3 +29,5 @@ SYSCALL(getpid)
+ SYSCALL(sbrk)
+ SYSCALL(sleep)
+ SYSCALL(uptime)
++SYSCALL(gethostname)
++SYSCALL(sethostname)
+\ No newline at end of file
