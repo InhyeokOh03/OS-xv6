@@ -134,6 +134,7 @@ int
 getcmd(char *buf, int nbuf)
 {
   char hostname[64] = { 0, };
+  gethostname(hostname);
   // TODO: Fill in hostname using gethostname()
   printf(2, "root@%s# ", hostname);
   memset(buf, 0, nbuf);
