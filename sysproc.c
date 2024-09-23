@@ -89,3 +89,15 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
+
+int
+sys_gethostname(void)
+{
+  return 0;
+}
+
+int
+sys_sethostname(void)
+{
+  return 0;
+}
