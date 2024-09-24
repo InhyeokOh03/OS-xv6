@@ -90,7 +90,7 @@ sys_uptime(void)
   return xticks;
 }
 
-char hostname[64] = "Datalab";
+char hostname[64] = "DataLab";
 
 int
 sys_gethostname(void)
@@ -107,6 +107,6 @@ sys_sethostname(void)
   char *h;
   argstr(0, &h);
   strcpy(hostname, h);
-  cprintf("hostname: %s", hostname);
+  // cprintf("hostname: %s", hostname);
   return 0;
 }
